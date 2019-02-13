@@ -129,6 +129,8 @@ Object subclass: Leaf [
    depthFirst: visitor prefix: string [
       visitor value: char value: string.
    ]
+
+
 ]
 
 Leaf subclass: Tree [
@@ -219,22 +221,22 @@ Object subclass: OutBits [
       bitIndex = 0 ifTrue: [self flushByte].
    ]
 ]
-
+"----------------------------------------------------------"
 getOp := Smalltalk arguments at: 1.
 iFileName := Smalltalk arguments at: 2.
 oFileName := Smalltalk arguments at: 3.
 
-inputFile := inputFile := FileStream open: iFileName mode: FileStream read.
+|inputFile outputFile|
 
-"Commented out to test file w/o breaking"
-"
+inputFile := FileStream open: iFileName mode: FileStream read.
+
 (oFileName ~= nil) ifTrue: [
     outputFile := FileStream open oFileName mode: FileStream write.
 ]
 ifFalse: [
     outputFile := stdout.
 ].
-"
+
 |priorityq|
 priorityq := SortedCollection new.
 "Turns debug on to view debug information"
@@ -293,11 +295,17 @@ dOp := FALSE.
                     1 to: (7 - char asString size) do: [:i | stdout << ' '.].
                 ].
                 stdout << getFreq.
-                1 to: (7 - getFreq asString size) do: [:i | stdout << ' '.].
+                1 to: (7 - getFreq size) do: [:i | stdout << ' '.].
                 stdout << val << nl.           
             ]
         ]
     ]
+    "-c option"
+    (getOp includes: $c) ifTrue: [
+        
+    ]
+    inputFile close.
+    outputFile close.
 ].
 
 "op -u"
