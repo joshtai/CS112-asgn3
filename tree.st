@@ -1,5 +1,5 @@
 #!/afs/cats.ucsc.edu/courses/cmps112-wm/usr/smalltalk/bin/gst -f
-"$Id: tree.st,v 1.1 2019-02-01 14:36:25-08 - - $"
+"$Id: tree.st,v 1.3 2019-02-11 14:56:03-08 - - $"
 
 nl := Character nl.
 
@@ -37,11 +37,11 @@ Object subclass: Leaf [
       (self printBase: aStream) << ')'.
    ]
 
-   inorder: visitor prefix: string [
+   depthFirst: visitor prefix: string [
       visitor value: char value: string.
    ]
 
-]
+].
 
 
 Leaf subclass: Tree [
@@ -67,12 +67,7 @@ Leaf subclass: Tree [
       (self printBase: aStream) << ',' << left << ',' << right << ')'.
    ]
 
-   inorder: visitor prefix: string [
-      left inorder: visitor prefix: string, '0'.
-      right inorder: visitor prefix: string, '1'.
-   ]
-
-]
+].
 
 
 a := Leaf new: $a count: 10.
@@ -87,7 +82,7 @@ sortcol := SortedCollection new.
 sortcol add: t; add: u; add: a; add: b; add: x; add: z; inspect.
 
 stdout << nl << 'Before vising z Tree' << nl.
-z inorder: [:char :string |
+z depthFirst: [:char :string |
    stdout << '[' << char << ']=' << string << nl.
 ] prefix: ''.
 

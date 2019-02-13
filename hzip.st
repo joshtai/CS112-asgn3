@@ -4,39 +4,6 @@ nl := Character nl.
 
 "Compression Algorithm based on Huffman Coding"
 
-
-"catfile.st"
-FileStream extend [
-   nl := Character nl.
-   catFile [
-      |count|
-      count := 0.
-      [self atEnd not] whileTrue: [
-         |padded|
-         count := count + 1.
-         padded := count printPaddedWith: Character space to: 6.
-         stdout << padded << ': ' << self nextLine << nl.
-      ]
-   ]
-    "
-    Part (a) in Compression.
-    Using example code from charfreq.st (lines 63 - 67)
-    "
-   initFreqTable [
-       |freqTable|
-       "0 to 255 elements (256) + EOF Element (1)"
-       freqTable := ZeroArray new: 257.
-       [self atEnd not] whileTrue: [
-           |ordChar|
-           ordChar := self next asInteger.
-           freqTable incr: ordChar.
-       ].
-       "put 1 at index 256 to indicate EOF"
-       freqTable at: 256 put: 1.
-       ^freqTable
-   ]
-]
-
 "charfreq.st"
 Object subclass: ZeroArray [
    |theArray|
@@ -81,6 +48,38 @@ Object subclass: ZeroArray [
    ]
 ]
 
+"catfile.st"
+FileStream extend [
+   nl := Character nl.
+   catFile [
+      |count|
+      count := 0.
+      [self atEnd not] whileTrue: [
+         |padded|
+         count := count + 1.
+         padded := count printPaddedWith: Character space to: 6.
+         stdout << padded << ': ' << self nextLine << nl.
+      ]
+   ]
+    "
+    Part (a) in Compression.
+    Using example code from charfreq.st (lines 63 - 67)
+    "
+   initFreqTable [
+       |freqTable|
+       "0 to 255 elements (256) + EOF Element (1)"
+       freqTable := ZeroArray new: 257.
+       [self atEnd not] whileTrue: [
+           |ordChar|
+           ordChar := self next asInteger.
+           freqTable incr: ordChar.
+       ].
+       "put 1 at index 256 to indicate EOF"
+       freqTable at: 256 put: 1.
+       ^freqTable
+   ]
+]
+
 "tree part b of compression from pdf"
 Object subclass: Leaf [
    |char count|
@@ -115,11 +114,10 @@ Object subclass: Leaf [
    printOn: aStream [
       (self printBase: aStream) << ')'.
    ]
-
-   inorder: visitor prefix: string [
+   "tree.st depthFirst (leaf)"
+   depthFirst: visitor prefix: string [
       visitor value: char value: string.
    ]
-
 ]
 
 Leaf subclass: Tree [
@@ -147,11 +145,11 @@ Leaf subclass: Tree [
    printOn: aStream [
       (self printBase: aStream) << ',' << left << ',' << right << ')'.
    ]
-
-   inorder: visitor prefix: string [
-      left inorder: visitor prefix: string, '0'.
-      right inorder: visitor prefix: string, '1'.
-   ]
+   "tree.st depthFirst (tree)"
+    depthFirst: visitor prefix: string [
+        left depthFirst: visitor prefix: string, '0'.
+        right depthFirst: visitor prefix: string, '1'.
+    ]
 
 ]
 
@@ -220,7 +218,6 @@ Object subclass: OutBits [
     ObjectMemory quit
 ].
 "
-|getOp iFileName oFileName|
 getOp := Smalltalk arguments at: 1.
 iFileName := Smalltalk arguments at: 2.
 oFileName := Smalltalk arguments at: 3.
@@ -232,33 +229,48 @@ inputFile := inputFile := FileStream open: iFileName mode: FileStream read.
 ]
 ifFalse: [
     outputFile := stdout.
-]
-|pqueue|
-pqueue := SortedCollection new.
+].
+|priorityq|
+priorityq := SortedCollection new.
 "Turns debug on to view debug information"
 dOp := FALSE.
 (getOp includes: $d) ifTrue: [
     stdout << 'op: d' << nl.
     dOp := TRUE.
-]
+].
 "---------------------Main-------------------------"
+"op -t,-c 3.compression"
 ((getOp includes: $t) | (getOp includes: $c)) ifTrue: [
     stdout << 'op: t or c' << nl.
     "Init freqTable."
-    |freqTable|
     freqTable := inputFile initFreqTable.
-    "Add all freq to priority queue"
+    "Add all freq to priority queue (part b compression) from .charfreq.st"
     freqTable keysAndValuesDo: [:key :val |
     (val notNil and: [val > 0]) ifTrue: [
-        pqueue add: (Leaf new: key count: val)]
-    ]
+        nLeaf := Leaf new: key count: val.
+        priorityq add: nLeaf.
+        ].
+    ].
+    "From tree.st -- huffman tree init (part c compression"
+    [priorityq size > 1] whileTrue: [
+        |leftnode rightnode treecount|
+        leftnode := priorityq removeFirst.
+        rightnode := priorityq removeFirst.
+        treecount := ((leftNode count) + (rightNode count))
+        nTree := Tree new: (leftNode char) count: treecount 
+                        left: leftNode right: rightNode.
+        priorityq add: nTree.
+    ].
+    |encode
 
-]
+].
+
+"op -u"
 (getOp includes: $u) ifTrue: [
     stdout << 'op: u' << nl.
 ]
 "---------------------End-------------------------"
-"priorityQ := SortedCollection new."
+"priority := SortedCollection new."
 
 "stdout << 'Hello, World!' << nl.
 n := 20.
