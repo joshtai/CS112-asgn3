@@ -9,8 +9,8 @@ Character extend [
       ^ (Character space <= self) & (self <= $~)
    ]
    visible [
-      self isPrint ifTrue: [^ '$', self asString]
-                   ifFalse: [^ self asInteger printStringRadix: 8]
+        self isPrint ifTrue: [^ '$', self asString]
+        ifFalse: [^ self asInteger printStringRadix: 8]
    ]
 ]
 

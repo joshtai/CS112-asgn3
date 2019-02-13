@@ -48,6 +48,17 @@ Object subclass: ZeroArray [
    ]
 ]
 
+Character extend [
+   isPrint [
+      ^ (Character space <= self) & (self <= $~)
+   ]
+   visible [
+       "[^ '$', self asString] getting rid of $ symbol"
+        self isPrint ifTrue: [^ self asString]
+        ifFalse: [^ self asInteger printStringRadix: 8]
+   ]
+]
+
 "catfile.st"
 FileStream extend [
    nl := Character nl.
@@ -66,17 +77,17 @@ FileStream extend [
     Using example code from charfreq.st (lines 63 - 67)
     "
    initFreqTable [
-       |freqTable|
+       |newTable|
        "0 to 255 elements (256) + EOF Element (1)"
-       freqTable := ZeroArray new: 257.
+       newTable := ZeroArray new: 257.
        [self atEnd not] whileTrue: [
            |ordChar|
            ordChar := self next asInteger.
-           freqTable incr: ordChar.
+           newTable incr: ordChar.
        ].
        "put 1 at index 256 to indicate EOF"
-       freqTable at: 256 put: 1.
-       ^freqTable
+       newTable at: 256 put: 1.
+       ^ newTable
    ]
 ]
 
@@ -150,9 +161,7 @@ Leaf subclass: Tree [
         left depthFirst: visitor prefix: string, '0'.
         right depthFirst: visitor prefix: string, '1'.
     ]
-
 ]
-
 "from bitstream.st"
 Object subclass: BitStream [
    |bitIndex byte myStream|
@@ -211,25 +220,21 @@ Object subclass: OutBits [
    ]
 ]
 
-
-"Checking correct number of args from bytecopy.st"
-"
-(((Smalltalk arguments size) > 0) & ((Smalltalk arguments size) < 4)) ifFalse: [
-    ObjectMemory quit
-].
-"
 getOp := Smalltalk arguments at: 1.
 iFileName := Smalltalk arguments at: 2.
 oFileName := Smalltalk arguments at: 3.
 
 inputFile := inputFile := FileStream open: iFileName mode: FileStream read.
-"If there is an arg for output file then set else stdout"
+
+"Commented out to test file w/o breaking"
+"
 (oFileName ~= nil) ifTrue: [
     outputFile := FileStream open oFileName mode: FileStream write.
 ]
 ifFalse: [
     outputFile := stdout.
 ].
+"
 |priorityq|
 priorityq := SortedCollection new.
 "Turns debug on to view debug information"
@@ -241,28 +246,58 @@ dOp := FALSE.
 "---------------------Main-------------------------"
 "op -t,-c 3.compression"
 ((getOp includes: $t) | (getOp includes: $c)) ifTrue: [
-    stdout << 'op: t or c' << nl.
+    "stdout << 'op: t or c' << nl."
+    |freqTable encodedArr|
     "Init freqTable."
     freqTable := inputFile initFreqTable.
     "Add all freq to priority queue (part b compression) from .charfreq.st"
     freqTable keysAndValuesDo: [:key :val |
-    (val notNil and: [val > 0]) ifTrue: [
-        nLeaf := Leaf new: key count: val.
-        priorityq add: nLeaf.
-        ].
+        (val notNil and: [val > 0]) ifTrue: [
+            nLeaf := Leaf new: key count: val.
+            priorityq add: nLeaf.
+        ]
     ].
-    "From tree.st -- huffman tree init (part c compression"
+    "huffman tree init (part c compression) - from tree.st"
     [priorityq size > 1] whileTrue: [
         |leftnode rightnode treecount|
+        "priority queue so its sorted in ascending (smaller -> left & larger -> right) "
         leftnode := priorityq removeFirst.
         rightnode := priorityq removeFirst.
-        treecount := ((leftNode count) + (rightNode count))
-        nTree := Tree new: (leftNode char) count: treecount 
-                        left: leftNode right: rightNode.
+        treecount := ((leftnode count) + (rightnode count)).
+        nTree := Tree new: (leftnode char) count: treecount left: leftnode right: rightnode.
         priorityq add: nTree.
     ].
-    |encode
-
+    "root-leaf encoding using dfs (part d compression)"
+    encodedArr := ZeroArray new: 257.
+    root := priorityq  first.
+    root depthFirst: [:char :string |
+       "stdout << '[' << char asInteger << '][' << string << ']' << nl."
+       encodedArr at: char asInteger put: string.
+    ] prefix:''.
+    "-t option (part e compression) similar to charfreq.st"
+    (getOp includes: $t) ifTrue: [
+        stdout << '-t option' << nl.
+        encodedArr keysAndValuesDo: [:key :val |
+            (val notNil) ifTrue: [
+                char := key asCharacter visible.
+                getFreq := (freqTable at: key) asString.
+                "newline char when key = 10"
+                key = 10 ifTrue: [char := 'x0A'].
+                "EOF char when key = 256"
+                key = 256 ifTrue: [char := 'EOF'].
+                (char asString size) = 1 ifTrue: [
+                    stdout << ' ' << char asString.
+                    1 to: (6 - char asString size) do: [:i | stdout << ' '.].
+                ] ifFalse: [
+                    stdout << char asString.
+                    1 to: (7 - char asString size) do: [:i | stdout << ' '.].
+                ].
+                stdout << getFreq.
+                1 to: (7 - getFreq asString size) do: [:i | stdout << ' '.].
+                stdout << val << nl.           
+            ]
+        ]
+    ]
 ].
 
 "op -u"

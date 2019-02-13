@@ -67,6 +67,11 @@ Leaf subclass: Tree [
       (self printBase: aStream) << ',' << left << ',' << right << ')'.
    ]
 
+   depthFirst: visitor prefix: string [
+      left depthFirst: visitor prefix: string, '0'.
+      right depthFirst: visitor prefix: string, '1'.
+   ]
+
 ].
 
 
