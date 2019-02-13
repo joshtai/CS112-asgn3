@@ -213,14 +213,21 @@ Object subclass: OutBits [
 
 
 "Checking correct number of args from bytecopy.st"
-"
-(((Smalltalk arguments size) > 0) & ((Smalltalk arguments size) < 4)) ifFalse: [
-    ObjectMemory quit
+
+(((Smalltalk arguments size) > 1) & ((Smalltalk arguments size) < 4)) ifFalse: [
+    stdout << 'Arguments should be between 2 and 3' << nl.
+    ObjectMemory quit: 1.
 ].
-"
+
 getOp := Smalltalk arguments at: 1.
 iFileName := Smalltalk arguments at: 2.
-oFileName := Smalltalk arguments at: 3.
+((Smalltalk arguments size) > 2) ifTrue: [ oFileName := Smalltalk arguments at: 3].
+
+(File exists: iFileName) ifFalse: [
+"^iFileName error: 'input file doest not exist'"
+    stdout << 'Input File "' << iFileName << '" does not exist' << nl.
+    ObjectMemory quit: 1.
+].
 
 inputFile := inputFile := FileStream open: iFileName mode: FileStream read.
 "If there is an arg for output file then set else stdout"
@@ -256,18 +263,23 @@ dOp := FALSE.
         |leftnode rightnode treecount|
         leftnode := priorityq removeFirst.
         rightnode := priorityq removeFirst.
-        treecount := ((leftNode count) + (rightNode count))
-        nTree := Tree new: (leftNode char) count: treecount 
-                        left: leftNode right: rightNode.
+        treecount := ((leftNode count) + (rightNode count)).
+        nTree := Tree new: (leftNode char) count: treecount left: leftNode right: rightNode.
         priorityq add: nTree.
     ].
-    |encode
+    "|encode|"
 
 ].
 
 "op -u"
 (getOp includes: $u) ifTrue: [
     stdout << 'op: u' << nl.
+    fileBits := BitStream new: inputFile.
+    bit := fileBits nextBit.
+    stdout << bit << nl.
+    (bit = 0) ifTrue: [
+      stdout << 'hi' << nl.
+    ].
 ]
 "---------------------End-------------------------"
 "priority := SortedCollection new."
