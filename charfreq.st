@@ -55,7 +55,6 @@ Object subclass: ZeroArray [
          aBlock value: index value: (self at: index).
       ]
    ]
-
 ]
 
 

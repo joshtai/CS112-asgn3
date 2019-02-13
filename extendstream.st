@@ -19,7 +19,6 @@ FileStream extend [
    atBitEnd [
       ^ (bitIndex isNil | (bitIndex = 0)) & self atEnd
    ]
-
 ]
 
 nl := Character nl.
