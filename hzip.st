@@ -221,10 +221,22 @@ Object subclass: OutBits [
       bitIndex = 0 ifTrue: [self flushByte].
    ]
 ]
-"----------------------------------------------------------"
+
+"Checking correct number of args from bytecopy.st"
+(((Smalltalk arguments size) > 1) & ((Smalltalk arguments size) < 4)) ifFalse: [
+    stdout << 'Arguments should be between 2 and 3' << nl.
+    ObjectMemory quit: 1.
+].
+
 getOp := Smalltalk arguments at: 1.
 iFileName := Smalltalk arguments at: 2.
-oFileName := Smalltalk arguments at: 3.
+((Smalltalk arguments size) > 2) ifTrue: [ oFileName := Smalltalk arguments at: 3].
+
+(File exists: iFileName) ifFalse: [
+"^iFileName error: 'input file doest not exist'"
+    stdout << 'Input File "' << iFileName << '" does not exist' << nl.
+    ObjectMemory quit: 1.
+].
 
 |inputFile outputFile|
 
@@ -311,6 +323,12 @@ dOp := FALSE.
 "op -u"
 (getOp includes: $u) ifTrue: [
     stdout << 'op: u' << nl.
+    fileBits := BitStream new: inputFile.
+    bit := fileBits nextBit.
+    stdout << bit << nl.
+    (bit = 0) ifTrue: [
+      stdout << 'hi' << nl.
+    ].
 ]
 "---------------------End-------------------------"
 "priority := SortedCollection new."
