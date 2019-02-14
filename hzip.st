@@ -308,14 +308,14 @@ dOp := FALSE.
                 ].
                 stdout << getFreq.
                 1 to: (7 - getFreq size) do: [:i | stdout << ' '.].
-                stdout << val << nl.           
+                stdout << val << nl.
             ]
         ]
     ]
     "-c option"
-    (getOp includes: $c) ifTrue: [
-        
-    ]
+    """(getOp includes: $c) ifTrue: [
+
+    ]"""
     inputFile close.
     outputFile close.
 ].
@@ -328,6 +328,10 @@ dOp := FALSE.
     stdout << bit << nl.
     (bit = 0) ifTrue: [
       stdout << 'hi' << nl.
+      1 to:8 do: [:x |
+        bit := fileBits nextBit.
+        stdout << bit << nl
+      ].
     ].
 ]
 "---------------------End-------------------------"
