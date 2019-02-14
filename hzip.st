@@ -188,6 +188,9 @@ Object subclass: BitStream [
    atEnd [
       ^bitIndex = 1 and: [myStream atEnd]
    ]
+   currByte [
+      ^byte
+   ]
 ]
 "from outbits.st"
 Object subclass: OutBits [
@@ -306,12 +309,20 @@ dOp := FALSE.
                     stdout << char asString.
                     1 to: (7 - char asString size) do: [:i | stdout << ' '.].
                 ].
-                stdout << getFreq.
-                1 to: (7 - getFreq size) do: [:i | stdout << ' '.].
-                stdout << val << nl.
+
+              """  s := getFreq printPaddedWith: Character space to: 10."""
+                n := getFreq asNumber.
+                padded := n printPaddedWith: Character space to: 6.
+                stdout << padded.
+                stdout << ' ' << val << nl.
             ]
         ]
-    ]
+    ].
+
+    (getOp includes: $t) ifFalse: [
+    stdout << 'not -t option' << nl.
+    ].
+
     "-c option"
     """(getOp includes: $c) ifTrue: [
 
@@ -328,12 +339,15 @@ dOp := FALSE.
     stdout << bit << nl.
     (bit = 0) ifTrue: [
       stdout << 'hi' << nl.
+      """byteval := inputFile nextByte.
+      stdout << byteval << nl."""
       1 to:8 do: [:x |
         bit := fileBits nextBit.
-        stdout << bit << nl
+        byteval := fileBits currByte.
+        stdout << byteval << nl.
       ].
     ].
-]
+].
 "---------------------End-------------------------"
 "priority := SortedCollection new."
 
