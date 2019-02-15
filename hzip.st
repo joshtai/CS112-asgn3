@@ -341,11 +341,15 @@ dOp := FALSE.
       stdout << 'hi' << nl.
       """byteval := inputFile nextByte.
       stdout << byteval << nl."""
-      1 to:8 do: [:x |
+      byteval := 0.
+      1 to:7 do: [:x |
         bit := fileBits nextBit.
-        byteval := fileBits currByte.
-        stdout << byteval << nl.
+      """  stdout << 'bit '<< bit  << nl."""
+        byteval := byteval bitShift: 1.
+        byteval := byteval + bit.
       ].
+      stdout << 'byte' << byteval << nl.
+
     ].
 ].
 "---------------------End-------------------------"
