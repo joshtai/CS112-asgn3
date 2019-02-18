@@ -129,8 +129,12 @@ Object subclass: Leaf [
    depthFirst: visitor prefix: string [
       visitor value: char value: string.
    ]
+    "postorder for -c"
+    postOrder: visitor [
+        visitor value: char value: self isLeaf.
+    ]
 
-
+    isLeaf [^TRUE.]
 ]
 
 Leaf subclass: Tree [
@@ -163,6 +167,14 @@ Leaf subclass: Tree [
         left depthFirst: visitor prefix: string, '0'.
         right depthFirst: visitor prefix: string, '1'.
     ]
+
+    postOrder: visitor [
+        left postOrder: visitor.
+        right postOrder: visitor.
+        visitor value: char value: self isLeaf.
+    ]
+
+    isLeaf [^FALSE]
 ]
 "from bitstream.st"
 Object subclass: BitStream [
@@ -314,7 +326,7 @@ dOp := FALSE.
     ]
     "-c option"
     (getOp includes: $c) ifTrue: [
-        
+        outBytes := OutBits new: outputFile.
     ]
     inputFile close.
     outputFile close.
