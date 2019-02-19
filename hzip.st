@@ -225,6 +225,7 @@ Object subclass: OutBits [
    ]
 ]
 
+
 "Checking correct number of args from bytecopy.st"
 (((Smalltalk arguments size) > 1) & ((Smalltalk arguments size) < 4)) ifFalse: [
     stdout << 'Arguments should be between 2 and 3' << nl.
@@ -304,15 +305,15 @@ dOp := FALSE.
                 key = 256 ifTrue: [char := 'EOF'].
                 (char asString size) = 1 ifTrue: [
                     stdout << ' ' << char asString.
-                    1 to: (6 - char asString size) do: [:i | stdout << ' '.].
+                    1 to: (5 - char asString size) do: [:i | stdout << ' '.].
                 ] ifFalse: [
                     stdout << char asString.
-                    1 to: (7 - char asString size) do: [:i | stdout << ' '.].
+                    1 to: (6 - char asString size) do: [:i | stdout << ' '.].
                 ].
 
               """  s := getFreq printPaddedWith: Character space to: 10."""
                 n := getFreq asNumber.
-                padded := n printPaddedWith: Character space to: 6.
+                padded := n printPaddedWith: Character space to: 3.
                 stdout << padded.
                 stdout << ' ' << val << nl.
             ]
@@ -333,12 +334,12 @@ dOp := FALSE.
 
 "op -u"
 (getOp includes: $u) ifTrue: [
-    stdout << 'op: u' << nl.
+    (getOp includes: $d) ifTrue: [
+        stdout << 'op: u' << nl.
+    ].
     fileBits := BitStream new: inputFile.
     bit := fileBits nextBit.
-    stdout << bit << nl.
     (bit = 0) ifTrue: [
-      stdout << 'hi' << nl.
       """byteval := inputFile nextByte.
       stdout << byteval << nl."""
       byteval := 0.
@@ -348,7 +349,13 @@ dOp := FALSE.
         byteval := byteval bitShift: 1.
         byteval := byteval + bit.
       ].
+      (getOp includes: $d) ifTrue: [
       stdout << 'byte' << byteval << nl.
+      ].
+
+      """use ordered collection as a stack"""
+      stack := OrderedCollection new.
+      stack addFirst: byteval.
 
     ].
 ].
