@@ -134,7 +134,7 @@ Object subclass: Leaf [
         visitor value: char value: (self isLeaf).
     ]
 
-    isLeaf [^ true]
+    isLeaf [^ TRUE]
 ]
 
 Leaf subclass: Tree [
@@ -174,7 +174,7 @@ Leaf subclass: Tree [
         visitor value: char value: (self isLeaf).
     ]
 
-    isLeaf [^ false]
+    isLeaf [^ FALSE]
 ]
 "from bitstream.st"
 Object subclass: BitStream [
