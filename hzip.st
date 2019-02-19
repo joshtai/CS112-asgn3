@@ -272,12 +272,13 @@ priorityq := SortedCollection new.
 "Turns debug on to view debug information"
 dOp := false.
 (getOp includes: $d) ifTrue: [
-    stdout << 'op: d' << nl.
+    stdout << nl << '-d option: Debug information will be shown.' << nl.
     dOp := true.
 ].
 "---------------------Main-------------------------"
 "op -t,-c 3.compression"
 ((getOp includes: $t) | (getOp includes: $c)) ifTrue: [
+
     "stdout << 'op: t or c' << nl."
     |freqTable encodedArr|
     "Init freqTable."
@@ -289,6 +290,14 @@ dOp := false.
             priorityq add: nLeaf.
         ]
     ].
+
+    dOp ifTrue: [
+        stdout << 'Creating Frequency table' << nl.
+        freqTable inspect.
+        stdout << 'Creating Priority Queue' << nl.
+        priorityq inspect.
+    ].
+
     "huffman tree init (part c compression) - from tree.st"
     [priorityq size > 1] whileTrue: [
         |leftnode rightnode treecount|
@@ -306,10 +315,17 @@ dOp := false.
        "stdout << '[' << char asInteger << '][' << string << ']' << nl."
        encodedArr at: char asInteger put: string.
     ] prefix:''.
+
+    dOp ifTrue: [
+        stdout << 'Encoding string' << nl.
+        encodedArr inspect.
+    ].
+
     "-t option (part e compression) similar to charfreq.st"
     (getOp includes: $t) ifTrue: [
-        (getOp includes: $d) ifTrue: [
-            stdout << '-t option' << nl.
+        dOp ifTrue: [
+            stdout << 'input file name: ' << inputFile << nl.
+            stdout << '-t option selected' << nl.
         ].
         encodedArr keysAndValuesDo: [:key :val |
             (val notNil) ifTrue: [
@@ -336,7 +352,15 @@ dOp := false.
         ]
     ]
     ifFalse: [
-        stdout << 'not -t option -c option' << nl.
+        dOp ifTrue: [
+            stdout << '-c option' << nl.
+            stdout << 'input file name: ' << iFileName << nl.
+            (oFileName = nil) ifTrue: [
+                stdout << 'output file not specified, printing to stdout.' << nl.
+            ] ifFalse: [
+                stdout << 'output file name: ' << oFileName << nl.
+            ].
+        ].
         dTree := ''.
         eTree postorder:[:char :isLeaf |
             "stdout << isLeaf << nl."
@@ -358,40 +382,44 @@ dOp := false.
                 dTree := dTree, '1'.
             ].
         ].
-    ].
-    outputBytes := OutBits new: outputFile.
-    "outputFile is either the correct file, or stdout if unspecified"
-    1 to: (dTree size) do: [:i |
-        currChar := (dTree at: i) asString.
-        currInt := currChar asNumber.
-                dOp ifTrue: [
-            stdout << currChar << nl.
-            stdout << 'curr' << (currInt bitAt: 1) << nl.
-        ].
-        currBit := currInt bitAt: 1.
-        outputBytes writeBit: currBit.
-    ].
-    "part g tree is completely written out"
-    outputBytes writeBit: 1.
-    inputFile reset.
-
-    [inputFile atEnd] whileFalse: [
-        currInt := inputFile next asInteger.
-        currCode := encodedArr at: currInt.
-        1 to: (currCode size) do: [:i |
+        outputBytes := OutBits new: outputFile.
+        "outputFile is either the correct file, or stdout if unspecified"
+        1 to: (dTree size) do: [:i |
+            currChar := (dTree at: i) asString.
+            currInt := currChar asNumber.
+                    dOp ifTrue: [
+                    stdout << currChar << nl.
+                    stdout << 'curr: ' << (currInt bitAt: 1) << nl.
+                ].
             currBit := currInt bitAt: 1.
             outputBytes writeBit: currBit.
         ].
+        "part g tree is completely written out"
+        outputBytes writeBit: 1.
+        inputFile reset.
+
+        [inputFile atEnd] whileFalse: [
+            currInt := inputFile next asInteger.
+            currCode := encodedArr at: currInt.
+            1 to: (currCode size) do: [:i |
+                currBit := currInt bitAt: 1.
+                outputBytes writeBit: currBit.
+            ].
+        ].
+        eof := (encodedArr at: 256).
+        1 to: (eof size) do: [:i |
+            currChar := (eof at: i) asString.
+            currInt := currChar asNumber.
+            outputBytes writeBit: (currInt bitAt: 1).
+        ].
+        dOp ifTrue: [
+            stdout << 'Compression complete.' << nl.
+        ].
+        outputBytes flushByte.
+        outputFile close.
     ].
-    eof := (encodedArr at: 256).
-    1 to: (eof size) do: [:i |
-        currChar := (eof at: i) asString.
-        currInt := currChar asNumber.
-        outputBytes writeBit: (currInt bitAt: 1).
-    ].
-    outputBytes flushByte.
     inputFile close.
-    outputFile close.
+
 
     "
     (oFileName ~= nil) ifTrue: [
@@ -439,12 +467,10 @@ dOp := false.
     "
 ].
 
-
-
 "op -u"
 (getOp includes: $u) ifTrue: [
-    (getOp includes: $d) ifTrue: [
-        stdout << 'op: u' << nl.
+    dOp ifTrue: [
+        stdout << '-u option' << nl.
     ].
     fileBits := BitStream new: inputFile.
     bit := fileBits nextBit.
