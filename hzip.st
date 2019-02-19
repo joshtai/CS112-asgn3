@@ -129,8 +129,12 @@ Object subclass: Leaf [
    depthFirst: visitor prefix: string [
       visitor value: char value: string.
    ]
+    "postorder for -c"
+    postorder: visitor [
+        visitor value: char value: (self isLeaf).
+    ]
 
-
+    isLeaf [^ true]
 ]
 
 Leaf subclass: Tree [
@@ -163,6 +167,14 @@ Leaf subclass: Tree [
         left depthFirst: visitor prefix: string, '0'.
         right depthFirst: visitor prefix: string, '1'.
     ]
+
+    postorder: visitor [
+        left postorder: visitor.
+        right postorder: visitor.
+        visitor value: char value: (self isLeaf).
+    ]
+
+    isLeaf [^ false]
 ]
 "from bitstream.st"
 Object subclass: BitStream [
@@ -232,6 +244,8 @@ Object subclass: OutBits [
     ObjectMemory quit: 1.
 ].
 
+|iFileName oFileName|
+
 getOp := Smalltalk arguments at: 1.
 iFileName := Smalltalk arguments at: 2.
 ((Smalltalk arguments size) > 2) ifTrue: [ oFileName := Smalltalk arguments at: 3].
@@ -247,7 +261,7 @@ iFileName := Smalltalk arguments at: 2.
 inputFile := FileStream open: iFileName mode: FileStream read.
 
 (oFileName ~= nil) ifTrue: [
-    outputFile := FileStream open oFileName mode: FileStream write.
+    outputFile := FileStream open: oFileName mode: FileStream write.
 ]
 ifFalse: [
     outputFile := stdout.
@@ -285,10 +299,10 @@ dOp := FALSE.
         nTree := Tree new: (leftnode char) count: treecount left: leftnode right: rightnode.
         priorityq add: nTree.
     ].
-    "root-leaf encoding using dfs (part d compression)"
+    "eTree-leaf encoding using dfs (part d compression)"
     encodedArr := ZeroArray new: 257.
-    root := priorityq  first.
-    root depthFirst: [:char :string |
+    eTree := priorityq  first.
+    eTree depthFirst: [:char :string |
        "stdout << '[' << char asInteger << '][' << string << ']' << nl."
        encodedArr at: char asInteger put: string.
     ] prefix:''.
@@ -318,10 +332,40 @@ dOp := FALSE.
                 stdout << ' ' << val << nl.
             ]
         ]
-    ].
-
-    (getOp includes: $t) ifFalse: [
-    stdout << 'not -t option' << nl.
+    ] 
+    ifFalse: [
+        stdout << 'not -t option -c option' << nl.
+        dTree := ''.
+        eTree postorder:[:char :isLeaf |
+            "stdout << isLeaf << nl."
+            isLeaf ifTrue:[
+                (char ~= 256) ifTrue: [
+                    char = 0 ifTrue: [
+                        dTree := (dTree, '0', '000000000').
+                    ] ifFalse: [
+                        temp := ''.
+                        8 to: 1 by: -1 do: [:i |
+                            temp := (temp, ((char bitAt: i) printString)).
+                        ].
+                        dTree := (dTree, '0', temp).
+                    ]
+                ] ifFalse: [
+                    dTree := (dTree, '0', '000000001').
+                ].
+            ] ifFalse: [
+                dTree := dTree, '1'.
+            ].
+        ].
+    ].        
+    (oFileName notNil) ifTrue: [
+            outputBytes := OutBits new: outputFile.
+            1 to: (dTree size) do: [:i |
+                currBit := (dTree at: i).
+                outputBytes writeBit: currBit.
+            ].
+            "part g tree is completely written out"
+            outputBytes writeBit: 1.
+            inputFile reset.
     ].
 
     "-c option"
