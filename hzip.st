@@ -130,11 +130,11 @@ Object subclass: Leaf [
       visitor value: char value: string.
    ]
     "postorder for -c"
-    postOrder: visitor [
-        visitor value: char value: self isLeaf.
+    postorder: visitor [
+        visitor value: char value: (self isLeaf).
     ]
 
-    isLeaf [^TRUE.]
+    isLeaf [^ true]
 ]
 
 Leaf subclass: Tree [
@@ -168,13 +168,13 @@ Leaf subclass: Tree [
         right depthFirst: visitor prefix: string, '1'.
     ]
 
-    postOrder: visitor [
-        left postOrder: visitor.
-        right postOrder: visitor.
-        visitor value: char value: self isLeaf.
+    postorder: visitor [
+        left postorder: visitor.
+        right postorder: visitor.
+        visitor value: char value: (self isLeaf).
     ]
 
-    isLeaf [^FALSE]
+    isLeaf [^ false]
 ]
 "from bitstream.st"
 Object subclass: BitStream [
@@ -199,6 +199,9 @@ Object subclass: BitStream [
    ]
    atEnd [
       ^bitIndex = 1 and: [myStream atEnd]
+   ]
+   currByte [
+      ^byte
    ]
 ]
 "from outbits.st"
@@ -240,6 +243,8 @@ Object subclass: OutBits [
     ObjectMemory quit: 1.
 ].
 
+|iFileName oFileName|
+
 getOp := Smalltalk arguments at: 1.
 iFileName := Smalltalk arguments at: 2.
 ((Smalltalk arguments size) > 2) ifTrue: [ oFileName := Smalltalk arguments at: 3].
@@ -255,7 +260,7 @@ iFileName := Smalltalk arguments at: 2.
 inputFile := FileStream open: iFileName mode: FileStream read.
 
 (oFileName ~= nil) ifTrue: [
-    outputFile := FileStream open oFileName mode: FileStream write.
+    outputFile := FileStream open: oFileName mode: FileStream write.
 ]
 ifFalse: [
     outputFile := stdout.
@@ -293,10 +298,10 @@ dOp := FALSE.
         nTree := Tree new: (leftnode char) count: treecount left: leftnode right: rightnode.
         priorityq add: nTree.
     ].
-    "root-leaf encoding using dfs (part d compression)"
+    "eTree-leaf encoding using dfs (part d compression)"
     encodedArr := ZeroArray new: 257.
-    root := priorityq  first.
-    root depthFirst: [:char :string |
+    eTree := priorityq  first.
+    eTree depthFirst: [:char :string |
        "stdout << '[' << char asInteger << '][' << string << ']' << nl."
        encodedArr at: char asInteger put: string.
     ] prefix:''.
@@ -318,16 +323,54 @@ dOp := FALSE.
                     stdout << char asString.
                     1 to: (7 - char asString size) do: [:i | stdout << ' '.].
                 ].
-                stdout << getFreq.
-                1 to: (7 - getFreq size) do: [:i | stdout << ' '.].
-                stdout << val << nl.           
+
+              """  s := getFreq printPaddedWith: Character space to: 10."""
+                n := getFreq asNumber.
+                padded := n printPaddedWith: Character space to: 6.
+                stdout << padded.
+                stdout << ' ' << val << nl.
             ]
         ]
-    ]
+    ] 
+    ifFalse: [
+        stdout << 'not -t option -c option' << nl.
+        dTree := ''.
+        eTree postorder:[:char :isLeaf |
+            "stdout << isLeaf << nl."
+            isLeaf ifTrue:[
+                (char ~= 256) ifTrue: [
+                    char = 0 ifTrue: [
+                        dTree := (dTree, '0', '000000000').
+                    ] ifFalse: [
+                        temp := ''.
+                        8 to: 1 by: -1 do: [:i |
+                            temp := (temp, ((char bitAt: i) printString)).
+                        ].
+                        dTree := (dTree, '0', temp).
+                    ]
+                ] ifFalse: [
+                    dTree := (dTree, '0', '000000001').
+                ].
+            ] ifFalse: [
+                dTree := dTree, '1'.
+            ].
+        ].
+    ].        
+    (oFileName notNil) ifTrue: [
+            outputBytes := OutBits new: outputFile.
+            1 to: (dTree size) do: [:i |
+                currBit := (dTree at: i).
+                outputBytes writeBit: currBit.
+            ].
+            "part g tree is completely written out"
+            outputBytes writeBit: 1.
+            inputFile reset.
+    ].
+
     "-c option"
-    (getOp includes: $c) ifTrue: [
-        outBytes := OutBits new: outputFile.
-    ]
+    """(getOp includes: $c) ifTrue: [
+
+    ]"""
     inputFile close.
     outputFile close.
 ].
@@ -340,8 +383,19 @@ dOp := FALSE.
     stdout << bit << nl.
     (bit = 0) ifTrue: [
       stdout << 'hi' << nl.
+      """byteval := inputFile nextByte.
+      stdout << byteval << nl."""
+      byteval := 0.
+      1 to:7 do: [:x |
+        bit := fileBits nextBit.
+      """  stdout << 'bit '<< bit  << nl."""
+        byteval := byteval bitShift: 1.
+        byteval := byteval + bit.
+      ].
+      stdout << 'byte' << byteval << nl.
+
     ].
-]
+].
 "---------------------End-------------------------"
 "priority := SortedCollection new."
 
