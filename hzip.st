@@ -352,7 +352,7 @@ dOp := FALSE.
                         dTree := (dTree, '0', temp).
                     ]
                 ] ifFalse: [
-                    dTree := (dTree, '0', '100000000').
+                    dTree := (dTree, '0', '000000001').
                 ].
             ] ifFalse: [
                 dTree := dTree, '1'.
@@ -396,12 +396,10 @@ dOp := FALSE.
     fileBits := BitStream new: inputFile.
     bit := fileBits nextBit.
     (bit = 0) ifTrue: [
-      """byteval := inputFile nextByte.
-      stdout << byteval << nl."""
       byteval := 0.
-      1 to:7 do: [:x |
+      1 to:8 do: [:x |
         bit := fileBits nextBit.
-      """  stdout << 'bit '<< bit  << nl."""
+        stdout << 'bit '<< bit  << nl.
         byteval := byteval bitShift: 1.
         byteval := byteval + bit.
       ].
@@ -411,7 +409,8 @@ dOp := FALSE.
 
       """use ordered collection as a stack"""
       stack := OrderedCollection new.
-      stack addFirst: byteval.
+      byteleaf := Leaf new: byteval count: 0.
+      stack addFirst: byteleaf.
 
     ].
 ].
