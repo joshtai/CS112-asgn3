@@ -308,7 +308,9 @@ dOp := FALSE.
     ] prefix:''.
     "-t option (part e compression) similar to charfreq.st"
     (getOp includes: $t) ifTrue: [
-        stdout << '-t option' << nl.
+        (getOp includes: $d) ifTrue: [
+            stdout << '-t option' << nl.
+        ].
         encodedArr keysAndValuesDo: [:key :val |
             (val notNil) ifTrue: [
                 char := key asCharacter visible.
@@ -332,7 +334,7 @@ dOp := FALSE.
                 stdout << ' ' << val << nl.
             ]
         ]
-    ] 
+    ]
     ifFalse: [
         stdout << 'not -t option -c option' << nl.
         dTree := ''.
@@ -350,23 +352,31 @@ dOp := FALSE.
                         dTree := (dTree, '0', temp).
                     ]
                 ] ifFalse: [
-                    dTree := (dTree, '0', '000000001').
+                    dTree := (dTree, '0', '100000000').
                 ].
             ] ifFalse: [
                 dTree := dTree, '1'.
             ].
         ].
-    ].        
-    (oFileName notNil) ifTrue: [
+    ].
             outputBytes := OutBits new: outputFile.
+            "outputFile is either the correct file, or stdout if unspecified"
             1 to: (dTree size) do: [:i |
-                currBit := (dTree at: i).
+                currChar := (dTree at: i) asString.
+                currInt := currChar asNumber.
+                (getOp includes: $d) ifTrue: [
+                  stdout << currChar << nl.
+                  stdout << 'curr' << (currInt bitAt: 1) << nl.
+                ].
+                currBit := currInt bitAt: 1.
                 outputBytes writeBit: currBit.
             ].
             "part g tree is completely written out"
             outputBytes writeBit: 1.
             inputFile reset.
-    ].
+
+    """print to stdout """
+
 
     "-c option"
     """(getOp includes: $c) ifTrue: [
@@ -375,6 +385,8 @@ dOp := FALSE.
     inputFile close.
     outputFile close.
 ].
+
+
 
 "op -u"
 (getOp includes: $u) ifTrue: [
