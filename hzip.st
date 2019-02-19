@@ -134,7 +134,7 @@ Object subclass: Leaf [
         visitor value: char value: (self isLeaf).
     ]
 
-    isLeaf [^ TRUE]
+    isLeaf [^ true]
 ]
 
 Leaf subclass: Tree [
@@ -174,7 +174,7 @@ Leaf subclass: Tree [
         visitor value: char value: (self isLeaf).
     ]
 
-    isLeaf [^ FALSE]
+    isLeaf [^ false]
 ]
 "from bitstream.st"
 Object subclass: BitStream [
@@ -270,10 +270,10 @@ ifFalse: [
 |priorityq|
 priorityq := SortedCollection new.
 "Turns debug on to view debug information"
-dOp := FALSE.
+dOp := false.
 (getOp includes: $d) ifTrue: [
     stdout << 'op: d' << nl.
-    dOp := TRUE.
+    dOp := true.
 ].
 "---------------------Main-------------------------"
 "op -t,-c 3.compression"
@@ -359,31 +359,84 @@ dOp := FALSE.
             ].
         ].
     ].
-            outputBytes := OutBits new: outputFile.
-            "outputFile is either the correct file, or stdout if unspecified"
-            1 to: (dTree size) do: [:i |
-                currChar := (dTree at: i) asString.
-                currInt := currChar asNumber.
-                (getOp includes: $d) ifTrue: [
-                  stdout << currChar << nl.
-                  stdout << 'curr' << (currInt bitAt: 1) << nl.
-                ].
+    outputBytes := OutBits new: outputFile.
+    "outputFile is either the correct file, or stdout if unspecified"
+    1 to: (dTree size) do: [:i |
+        currChar := (dTree at: i) asString.
+        currInt := currChar asNumber.
+                dOp ifTrue: [
+            stdout << currChar << nl.
+            stdout << 'curr' << (currInt bitAt: 1) << nl.
+        ].
+        currBit := currInt bitAt: 1.
+        outputBytes writeBit: currBit.
+    ].
+    "part g tree is completely written out"
+    outputBytes writeBit: 1.
+    inputFile reset.
+
+    [inputFile atEnd] whileFalse: [
+        currInt := inputFile next asInteger.
+        currCode := encodedArr at: currInt.
+        1 to: (currCode size) do: [:i |
+            currBit := currInt bitAt: 1.
+            outputBytes writeBit: currBit.
+        ].
+    ].
+    eof := (encodedArr at: 256).
+    1 to: (eof size) do: [:i |
+        currChar := (eof at: i) asString.
+        currInt := currChar asNumber.
+        outputBytes writeBit: (currInt bitAt: 1).
+    ].
+    outputBytes flushByte.
+    inputFile close.
+    outputFile close.
+
+    "
+    (oFileName ~= nil) ifTrue: [
+        outputBytes := OutBits new: outputFile.
+        ""outputFile is either the correct file, or stdout if unspecified""
+        1 to: (dTree size) do: [:i |
+            currChar := (dTree at: i) asString.
+            currInt := currChar asNumber.
+            dOp ifTrue: [
+                stdout << currChar << nl.
+                stdout << 'curr' << (currInt bitAt: 1) << nl.
+            ].
+            currBit := currInt bitAt: 1.
+            outputBytes writeBit: currBit.
+        ].
+        ""part g tree is completely written out""
+        outputBytes writeBit: 1.
+        inputFile reset.
+
+        [inputFile atEnd] whileFalse: [
+            currInt := inputFile next asInteger.
+            currCode := encodedArr at: currInt.
+            1 to: (currCode size) do: [:i |
                 currBit := currInt bitAt: 1.
                 outputBytes writeBit: currBit.
             ].
-            "part g tree is completely written out"
-            outputBytes writeBit: 1.
-            inputFile reset.
-
-    """print to stdout """
-
-
-    "-c option"
-    """(getOp includes: $c) ifTrue: [
-
-    ]"""
-    inputFile close.
-    outputFile close.
+        ].
+        eof := (encodedArr at: 256).
+        1 to: (eof size) do: [:i |
+            currChar := (eof at: i) asString.
+            currInt := currChar asNumber.
+            outputBytes writeBit: (currInt bitAt: 1).
+        ].
+        outputBytes flushByte.
+        outputFile close.
+    ] ifFalse: [
+        inputFile reset.
+        [inputFile atEnd] whileFalse: [
+            currInt := inputFile next asInteger.
+            currCode := encodedArr at: currInt.
+            stdout << currCode.
+        ].
+        stdout << (encodedArr at: 256) << nl.
+    ].
+    "
 ].
 
 
