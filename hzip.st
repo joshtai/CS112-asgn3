@@ -239,7 +239,8 @@ Object subclass: OutBits [
 
 
 "Checking correct number of args from bytecopy.st"
-(((Smalltalk arguments size) > 1) & ((Smalltalk arguments size) < 4)) ifFalse: [
+(((Smalltalk arguments size) > 1) & ((Smalltalk arguments size) < 4)) 
+ifFalse: [
     stdout << 'Arguments should be between 2 and 3' << nl.
     ObjectMemory quit: 1.
 ].
@@ -248,7 +249,9 @@ Object subclass: OutBits [
 
 getOp := Smalltalk arguments at: 1.
 iFileName := Smalltalk arguments at: 2.
-((Smalltalk arguments size) > 2) ifTrue: [ oFileName := Smalltalk arguments at: 3].
+((Smalltalk arguments size) > 2) ifTrue: [ 
+    oFileName := Smalltalk arguments at: 3
+].
 
 (File exists: iFileName) ifFalse: [
 "^iFileName error: 'input file doest not exist'"
@@ -283,7 +286,6 @@ dOp := false.
     |freqTable encodedArr|
     "Init freqTable."
     freqTable := inputFile initFreqTable.
-    "Add all freq to priority queue (part b compression) from .charfreq.st"
     freqTable keysAndValuesDo: [:key :val |
         (val notNil and: [val > 0]) ifTrue: [
             nLeaf := Leaf new: key count: val.
@@ -301,11 +303,11 @@ dOp := false.
     "huffman tree init (part c compression) - from tree.st"
     [priorityq size > 1] whileTrue: [
         |leftnode rightnode treecount|
-        "priority queue so its sorted in ascending (smaller -> left & larger -> right) "
         leftnode := priorityq removeFirst.
         rightnode := priorityq removeFirst.
         treecount := ((leftnode count) + (rightnode count)).
-        nTree := Tree new: (leftnode char) count: treecount left: leftnode right: rightnode.
+        nTree := Tree new: (leftnode char) 
+                count: treecount left: leftnode right: rightnode.
         priorityq add: nTree.
     ].
     "eTree-leaf encoding using dfs (part d compression)"
@@ -337,13 +339,15 @@ dOp := false.
                 key = 256 ifTrue: [char := 'EOF'].
                 (char asString size) = 1 ifTrue: [
                     stdout << ' ' << char asString.
-                    1 to: (5 - char asString size) do: [:i | stdout << ' '.].
+                    1 to: (5 - char asString size) do: [:i | 
+                        stdout << ' '.
+                    ].
                 ] ifFalse: [
                     stdout << char asString.
-                    1 to: (6 - char asString size) do: [:i | stdout << ' '.].
+                    1 to: (6 - char asString size) do: [:i | 
+                        stdout << ' '.
+                    ].
                 ].
-
-              """  s := getFreq printPaddedWith: Character space to: 10."""
                 n := getFreq asNumber.
                 padded := n printPaddedWith: Character space to: 3.
                 stdout << padded.
@@ -356,9 +360,11 @@ dOp := false.
             stdout << '-c option' << nl.
             stdout << 'input file name: ' << iFileName << nl.
             (oFileName = nil) ifTrue: [
-                stdout << 'output file not specified, printing to stdout.' << nl.
+                stdout << 
+                'output file not specified, printing to stdout.' << 
+                nl.
             ] ifFalse: [
-                stdout << 'output file name: ' << oFileName << nl.
+                stdout << 'output file name:' << oFileName << nl.
             ].
         ].
         dTree := ''.
@@ -371,7 +377,8 @@ dOp := false.
                     ] ifFalse: [
                         temp := ''.
                         8 to: 1 by: -1 do: [:i |
-                            temp := (temp, ((char bitAt: i) printString)).
+                            curr := char bitAt: i.
+                            temp := (temp, (curr printString)).
                         ].
                         dTree := (dTree, '0', temp).
                     ]
@@ -383,7 +390,6 @@ dOp := false.
             ].
         ].
         outputBytes := OutBits new: outputFile.
-        "outputFile is either the correct file, or stdout if unspecified"
         1 to: (dTree size) do: [:i |
             currChar := (dTree at: i) asString.
             currInt := currChar asNumber.
@@ -425,52 +431,6 @@ dOp := false.
         outputFile close.
     ].
     inputFile close.
-
-
-    "
-    (oFileName ~= nil) ifTrue: [
-        outputBytes := OutBits new: outputFile.
-        ""outputFile is either the correct file, or stdout if unspecified""
-        1 to: (dTree size) do: [:i |
-            currChar := (dTree at: i) asString.
-            currInt := currChar asNumber.
-            dOp ifTrue: [
-                stdout << currChar << nl.
-                stdout << 'curr' << (currInt bitAt: 1) << nl.
-            ].
-            currBit := currInt bitAt: 1.
-            outputBytes writeBit: currBit.
-        ].
-        ""part g tree is completely written out""
-        outputBytes writeBit: 1.
-        inputFile reset.
-
-        [inputFile atEnd] whileFalse: [
-            currInt := inputFile next asInteger.
-            currCode := encodedArr at: currInt.
-            1 to: (currCode size) do: [:i |
-                currBit := currInt bitAt: 1.
-                outputBytes writeBit: currBit.
-            ].
-        ].
-        eof := (encodedArr at: 256).
-        1 to: (eof size) do: [:i |
-            currChar := (eof at: i) asString.
-            currInt := currChar asNumber.
-            outputBytes writeBit: (currInt bitAt: 1).
-        ].
-        outputBytes flushByte.
-        outputFile close.
-    ] ifFalse: [
-        inputFile reset.
-        [inputFile atEnd] whileFalse: [
-            currInt := inputFile next asInteger.
-            currCode := encodedArr at: currInt.
-            stdout << currCode.
-        ].
-        stdout << (encodedArr at: 256) << nl.
-    ].
-    "
 ].
 
 "op -u"
@@ -514,7 +474,8 @@ dOp := false.
               |rsubtree lsubtree|
               rsubtree := stack removeFirst.
               lsubtree := stack removeFirst.
-              newTree := Tree new: (lsubtree char) count: 0 left: lsubtree right: rsubtree.
+              newTree := Tree new: (lsubtree char) 
+                            count: 0 left: lsubtree right: rsubtree.
               stack addFirst: newTree.
               dOp ifTrue: [
                   """stdout << 'right ' << rsubtree << nl.
@@ -533,13 +494,6 @@ dOp := false.
           ].
         ].
     ].
-    "end reconstruction of tree"
-  """  test := rootptr getLeft.
-    stdout << 'left ' << test << nl.
-    test := test getRight.
-    stdout << 'right ' << test << nl.
-    test := test getLeft.
-    stdout << 'left isleaf ' << fileBits atEnd<< nl."""
 
     [fileBits atEnd] whileFalse: [
       |node|
@@ -554,13 +508,5 @@ dOp := false.
           ].
       ].
       outputFile nextPutByte: node char asInteger.
-      "stdout nextPutByte: node c."
     ].
 ].
-"---------------------End-------------------------"
-"priority := SortedCollection new."
-
-"stdout << 'Hello, World!' << nl.
-n := 20.
-s := n printPaddedWith: Character space to: 10.
-stdout << s << nl."
