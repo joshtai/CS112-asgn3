@@ -474,29 +474,33 @@ dOp := false.
     ].
     fileBits := BitStream new: inputFile.
     bit := fileBits nextBit.
-    (bit = 0) ifTrue: [
-      byteval := 0.
-      1 to:8 do: [:x |
-        bit := fileBits nextBit.
-        stdout << 'bit '<< bit  << nl.
-        byteval := byteval bitShift: 1.
-        byteval := byteval + bit.
-      ].
-      (getOp includes: $d) ifTrue: [
-      stdout << 'byte' << byteval << nl.
-      ].
+    doneDecode := false.
+    [doneDecode] whileFalse: [
+        (bit = 0) ifTrue: [
+          byteval := 0.
+          1 to:8 do: [:x |
+            bit := fileBits nextBit.
+            stdout << 'bit '<< bit  << nl.
+            byteval := byteval bitShift: 1.
+            byteval := byteval + bit.
+          ].
+          (getOp includes: $d) ifTrue: [
+          stdout << 'byte' << byteval << nl.
+          ].
 
-      """use ordered collection as a stack"""
-      stack := OrderedCollection new.
-      byteleaf := Leaf new: byteval count: 0.
-      stack addFirst: byteleaf.
-      stdout << byteleaf << nl.
+          """use ordered collection as a stack"""
+          stack := OrderedCollection new.
+          stdout << stack size << nl.
+          byteleaf := Leaf new: byteval count: 0.
+          stack addFirst: byteleaf.
+          stdout << byteleaf << nl.
 
-    ] ifFalse: [
-    """pop the 1 and then 0 subtree"""
-    1subtree := stack first.
-    stdout << 1subtree << nl.
-
+        ] ifFalse: [
+          """pop the 1 and then 0 subtree"""
+          rsubtree := stack removeFirst.
+          stdout << 1subtree << nl.
+          stdout << stack size << nl.
+        ].
     ].
 ].
 "---------------------End-------------------------"
