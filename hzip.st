@@ -469,37 +469,63 @@ dOp := false.
 
 "op -u"
 (getOp includes: $u) ifTrue: [
+    |doneDecode byteval|
     dOp ifTrue: [
         stdout << '-u option' << nl.
     ].
     fileBits := BitStream new: inputFile.
-    bit := fileBits nextBit.
+
     doneDecode := false.
     [doneDecode] whileFalse: [
+        bit := fileBits nextBit.
         (bit = 0) ifTrue: [
           byteval := 0.
           1 to:8 do: [:x |
             bit := fileBits nextBit.
-            stdout << 'bit '<< bit  << nl.
+            "stdout << 'bit '<< bit  << nl."
             byteval := byteval bitShift: 1.
             byteval := byteval + bit.
           ].
-          (getOp includes: $d) ifTrue: [
-          stdout << 'byte' << byteval << nl.
+          stdout << doneDecode << nl.
+          (byteval = 0) ifTrue: [
+            stdout << 'bye' << byteval << nl.
+            stdout << 'zero' << nl.
+            bit := fileBits nextBit.
+            (bit = 1) ifTrue: [
+              byteval := byteval + 256.
+              stdout << 'byte' << byteval << nl.
+              "doneDecode := true."
           ].
-
+          "doneDecode := true."
+          ].
+          dOp ifTrue: [
+              stdout << 'byte' << byteval << nl.
+          ].
           """use ordered collection as a stack"""
           stack := OrderedCollection new.
-          stdout << stack size << nl.
           byteleaf := Leaf new: byteval count: 0.
           stack addFirst: byteleaf.
-          stdout << byteleaf << nl.
 
         ] ifFalse: [
           """pop the 1 and then 0 subtree"""
-          rsubtree := stack removeFirst.
-          stdout << 1subtree << nl.
-          stdout << stack size << nl.
+          stdout << ' stacksize ' << stack size << nl.
+          (stack size = 1) ifFalse: [
+              rsubtree := stack removeFirst.
+              stdout << 'right ' << rsubtree << nl.
+              lsubtree := stack removeFirst.
+              stdout << 'char' << lsubtree char << nl.
+              newTree := Tree new: (lsubtree char) count: 0 left: lsubtree right: rsubtree.
+              stack addFirst: newTree.
+              dOp ifTrue: [
+                  """stdout << 'right ' << rsubtree << nl.
+                  stdout << 'left ' << lsubtree << nl."""
+              ].
+          ] ifTrue: [
+              rsubtree := stack removeFirst.
+              stdout << 'right ' << rsubtree << nl.
+              doneDecode := true.
+          ].
+
         ].
     ].
 ].
