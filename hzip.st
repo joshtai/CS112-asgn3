@@ -397,12 +397,16 @@ dOp := false.
         "part g tree is completely written out"
         outputBytes writeBit: 1.
         inputFile reset.
-
+        stdout << inputFile atEnd << nl.
         [inputFile atEnd] whileFalse: [
             currInt := inputFile next asInteger.
             currCode := encodedArr at: currInt.
+            stdout << 'curr: ' << currCode << nl.
             1 to: (currCode size) do: [:i |
-                currBit := currInt bitAt: 1.
+
+                bitChar := (currCode at: i) asString.
+                bitInt := bitChar asNumber.
+                currBit := bitInt bitAt: 1.
                 outputBytes writeBit: currBit.
             ].
         ].
@@ -410,6 +414,8 @@ dOp := false.
         1 to: (eof size) do: [:i |
             currChar := (eof at: i) asString.
             currInt := currChar asNumber.
+            stdout << currChar << nl.
+            stdout << 'eof: ' << (currInt bitAt: 1) << nl.
             outputBytes writeBit: (currInt bitAt: 1).
         ].
         dOp ifTrue: [
@@ -505,6 +511,7 @@ dOp := false.
         ] ifFalse: [
           """pop the 1 and then 0 subtree"""
           (stack size = 1) ifFalse: [
+              |rsubtree lsubtree|
               rsubtree := stack removeFirst.
               lsubtree := stack removeFirst.
               newTree := Tree new: (lsubtree char) count: 0 left: lsubtree right: rsubtree.
@@ -515,6 +522,13 @@ dOp := false.
               ].
           ] ifTrue: [
               rootptr := stack removeFirst.
+              dOp ifTrue: [
+                  stdout << 'decode tree: ' << rootptr << nl.
+                  test := rootptr getLeft.
+                  stdout << 'left ' << test << nl.
+                  test := test getRight getRight getLeft getRight.
+                  stdout << 'left ' << test << nl.
+              ].
               doneDecode := true.
           ].
         ].
@@ -530,9 +544,9 @@ dOp := false.
     [fileBits atEnd] whileFalse: [
       |node|
       node := rootptr.
+
       [node isLeaf] whileFalse: [
           bit := fileBits nextBit.
-          "stdout << 'bit ' << bit << nl."
           (bit = 0) ifTrue: [
               node := node getLeft.
           ] ifFalse: [
