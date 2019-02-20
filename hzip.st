@@ -464,6 +464,12 @@ dOp := false.
       stack := OrderedCollection new.
       byteleaf := Leaf new: byteval count: 0.
       stack addFirst: byteleaf.
+      stdout << byteleaf << nl.
+
+    ] ifFalse: [
+    """pop the 1 and then 0 subtree"""
+    1subtree := stack first.
+    stdout << 1subtree << nl.
 
     ].
 ].
