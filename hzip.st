@@ -198,7 +198,7 @@ Object subclass: BitStream [
       ^byte value bitAt: bitIndex
    ]
    atEnd [
-      ^bitIndex = 1 and: [myStream atEnd]
+      ^myStream atEnd
    ]
    currByte [
       ^byte
@@ -469,7 +469,7 @@ dOp := false.
 
 "op -u"
 (getOp includes: $u) ifTrue: [
-    |doneDecode byteval|
+    |doneDecode byteval rootptr|
     dOp ifTrue: [
         stdout << '-u option' << nl.
     ].
@@ -486,14 +486,10 @@ dOp := false.
             byteval := byteval bitShift: 1.
             byteval := byteval + bit.
           ].
-          stdout << doneDecode << nl.
           (byteval = 0) ifTrue: [
-            stdout << 'bye' << byteval << nl.
-            stdout << 'zero' << nl.
             bit := fileBits nextBit.
             (bit = 1) ifTrue: [
               byteval := byteval + 256.
-              stdout << 'byte' << byteval << nl.
               "doneDecode := true."
           ].
           "doneDecode := true."
@@ -508,12 +504,9 @@ dOp := false.
 
         ] ifFalse: [
           """pop the 1 and then 0 subtree"""
-          stdout << ' stacksize ' << stack size << nl.
           (stack size = 1) ifFalse: [
               rsubtree := stack removeFirst.
-              stdout << 'right ' << rsubtree << nl.
               lsubtree := stack removeFirst.
-              stdout << 'char' << lsubtree char << nl.
               newTree := Tree new: (lsubtree char) count: 0 left: lsubtree right: rsubtree.
               stack addFirst: newTree.
               dOp ifTrue: [
@@ -521,12 +514,33 @@ dOp := false.
                   stdout << 'left ' << lsubtree << nl."""
               ].
           ] ifTrue: [
-              rsubtree := stack removeFirst.
-              stdout << 'right ' << rsubtree << nl.
+              rootptr := stack removeFirst.
               doneDecode := true.
           ].
-
         ].
+    ].
+    "end reconstruction of tree"
+  """  test := rootptr getLeft.
+    stdout << 'left ' << test << nl.
+    test := test getRight.
+    stdout << 'right ' << test << nl.
+    test := test getLeft.
+    stdout << 'left isleaf ' << fileBits atEnd<< nl."""
+
+    [fileBits atEnd] whileFalse: [
+      |node|
+      node := rootptr.
+      [node isLeaf] whileFalse: [
+          bit := fileBits nextBit.
+          "stdout << 'bit ' << bit << nl."
+          (bit = 0) ifTrue: [
+              node := node getLeft.
+          ] ifFalse: [
+              node := node getRight.
+          ].
+      ].
+      outputFile nextPutByte: node char asInteger.
+      "stdout nextPutByte: node c."
     ].
 ].
 "---------------------End-------------------------"
